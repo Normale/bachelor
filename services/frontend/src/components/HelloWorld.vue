@@ -1,6 +1,7 @@
+<!-- HelloWorld.vue -->
 <template>
-  <div>
-    <p>{{ msg }}</p>
+  <div class="ping-container">
+    <p class="ping-message">{{ msg }}</p>
   </div>
 </template>
 
@@ -30,4 +31,21 @@ export default defineComponent({
     this.getMessage();
   },
 });
-</script>
+
+<style scoped>
+.ping-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #000000;
+}
+
+.ping-message {
+  font-size: 48px;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 2px 2px #000000;
+}
+</style>
+
