@@ -1,69 +1,64 @@
-import Vue from 'vue';
-import VueRouter from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router'
+import HomeView from '@/views/HomeView.vue';
+import RegisterView from '@/views/RegisterView.vue';
+import LoginView from '@/views/LoginView.vue';
+import DashboardView from '@/views/DashboardView.vue';
+import ProfileView from '@/views/ProfileView.vue';
+import NoteView from '@/views/NoteView.vue';
+import EditNoteView from '@/views/EditNoteView.vue';
+import store from '@/store'; // NEW
 
-import store from '@/store';
-
-import Dashboard from '@/views/Dashboard';
-import EditNote from '@/views/EditNote';
-import Home from '@/views/Home.vue';
-import Login from '@/views/Login';
-import Note from '@/views/Note';
-import Profile from '@/views/Profile';
-import Register from '@/views/Register';
-
-Vue.use(VueRouter);
 
 const routes = [
   {
     path: '/',
     name: "Home",
-    component: Home,
+    component: HomeView,
   },
   {
     path: '/register',
     name: 'Register',
-    component: Register,
+    component: RegisterView,
   },
   {
     path: '/login',
     name: 'Login',
-    component: Login,
+    component: LoginView,
   },
   {
     path: '/dashboard',
     name: 'Dashboard',
-    component: Dashboard,
-    meta: {requiresAuth: true},
+    component: DashboardView,
+    meta: { requiresAuth: true },
   },
   {
     path: '/profile',
     name: 'Profile',
-    component: Profile,
-    meta: {requiresAuth: true},
+    component: ProfileView,
+    meta: { requiresAuth: true },
   },
   {
     path: '/note/:id',
     name: 'Note',
-    component: Note,
-    meta: {requiresAuth: true},
+    component: NoteView,
+    meta: { requiresAuth: true },
     props: true,
   },
   {
     path: '/editnote/:id',
     name: 'EditNote',
-    component: EditNote,
-    meta: {requiresAuth: true},
+    component: EditNoteView,
+    meta: { requiresAuth: true },
     props: true,
-  }
+  },
 ]
 
-const router = new VueRouter({
-  mode: 'history',
-  base: process.env.BASE_URL,
+const router = createRouter({
+  history: createWebHistory(process.env.BASE_URL),
   routes,
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _, next) => {
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (store.getters.isAuthenticated) {
       next();

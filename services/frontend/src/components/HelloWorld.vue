@@ -6,8 +6,9 @@
 
 <script>
 import axios from 'axios';
+import { defineComponent } from 'vue';
 
-export default {
+export default defineComponent({
   name: 'Ping',
   data() {
     return {
@@ -28,5 +29,5 @@ export default {
   created() {
     this.getMessage();
   },
-};
+});
 </script>
