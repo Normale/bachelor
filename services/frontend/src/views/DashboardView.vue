@@ -1,49 +1,31 @@
 <template>
   <div>
     <section>
-      <h1>Add new note</h1>
+      <h1>Upload Image</h1>
       <hr/><br/>
 
       <form @submit.prevent="submit">
         <div class="mb-3">
-          <label for="title" class="form-label">Title:</label>
-          <input type="text" name="title" v-model="form.title" class="form-control" />
+          <label for="image" class="form-label">Image:</label>
+          <input type="file" name="image" accept="image/*" @change="onImageSelected" class="form-control" />
         </div>
-        <div class="mb-3">
-          <label for="content" class="form-label">Content:</label>
-          <textarea
-            name="content"
-            v-model="form.content"
-            class="form-control"
-          ></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="submit" class="btn btn-primary" :disabled="!form.imageFile">Submit</button>
+        
       </form>
     </section>
 
     <br/><br/>
 
     <section>
-      <h1>Notes</h1>
+      <h1>Preview</h1>
       <hr/><br/>
 
-      <div v-if="notes.length">
-        <div v-for="note in notes" :key="note.id" class="notes">
-          <div class="card" style="width: 18rem;">
-            <div class="card-body">
-              <ul>
-                <li><strong>Note Title:</strong> {{ note.title }}</li>
-                <li><strong>Author:</strong> {{ note.author.username }}</li>
-                <li><router-link :to="{name: 'Note', params:{id: note.id}}">View</router-link></li>
-              </ul>
-            </div>
-          </div>
-          <br/>
-        </div>
+      <div v-if="form.image">
+        <img :src="form.image" alt="Preview" style="max-width: 100%; max-height: 300px;" />
       </div>
 
       <div v-else>
-        <p>Nothing to see. Check back later.</p>
+        <p>No image selected.</p>
       </div>
     </section>
   </div>
@@ -51,28 +33,26 @@
 
 <script>
 import { defineComponent } from 'vue';
-import { mapGetters, mapActions } from 'vuex';
+import { mapActions } from 'vuex';
 
 export default defineComponent({
   name: 'DashboardView',
   data() {
     return {
       form: {
-        title: '',
-        content: '',
+        image: null,
+        imageFile: null,
       },
     };
   },
-  created: function() {
-    return this.$store.dispatch('getNotes');
-  },
-  computed: {
-    ...mapGetters({ notes: 'stateNotes'}),
-  },
   methods: {
-    ...mapActions(['createNote']),
+    ...mapActions('images', ['uploadImage']),
     async submit() {
-      await this.createNote(this.form);
+      await this.uploadImage(this.form);
+    },
+    onImageSelected(event) {
+      this.form.image = URL.createObjectURL(event.target.files[0]);
+      this.form.imageFile = event.target.files[0];
     },
   },
 });
