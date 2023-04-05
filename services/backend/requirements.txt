@@ -1,5 +1,6 @@
 aerich==0.7.1
 aiosqlite==0.17.0
+aiofiles==23.1.0
 anyio==3.6.2
 asyncpg==0.27.0
 attrs==22.2.0
