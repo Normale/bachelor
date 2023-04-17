@@ -1,49 +1,63 @@
-from fastapi import HTTPException
-from tortoise.exceptions import DoesNotExist
-
-from src.database.models import Notes
-from src.schemas.notes import NoteOutSchema
+import os
+import uuid
+from typing import Union
+from fastapi import UploadFile, HTTPException
+from src.config import settings
+from pathlib import Path
+from fastapi.responses import JSONResponse
 from src.schemas.token import Status
+from fastapi.responses import Response
 
+async def upload_image_to_storage(
+    image: UploadFile, username: str
+) -> Union[Status, JSONResponse]:
+    """
+    Upload an image file to the server's file system.
 
-async def get_notes():
-    return await NoteOutSchema.from_queryset(Notes.all())
+    Parameters:
+    - image: the image file to upload
+    - username: the username of the user who uploaded the image
 
-
-async def get_note(note_id) -> NoteOutSchema:
-    return await NoteOutSchema.from_queryset_single(Notes.get(id=note_id))
-
-
-async def create_note(note, current_user) -> NoteOutSchema:
-    note_dict = note.dict(exclude_unset=True)
-    note_dict["author_id"] = current_user.id
-    note_obj = await Notes.create(**note_dict)
-    return await NoteOutSchema.from_tortoise_orm(note_obj)
-
-
-async def update_note(note_id, note, current_user) -> NoteOutSchema:
+    Returns:
+    - A JSON response indicating success if the upload was successful, or a Status object indicating the error.
+    """
     try:
-        db_note = await NoteOutSchema.from_queryset_single(Notes.get(id=note_id))
-    except DoesNotExist:
-        raise HTTPException(status_code=404, detail=f"Note {note_id} not found")
+        # Create a unique filename for the image
+        file_name = f"{str(uuid.uuid4())}.{image.filename.split('.')[-1]}"
+        # Create the directory for the user's images if it does not exist
+        upload_dir = Path(settings.IMAGE_UPLOAD_DIR) / username
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        # Save the image to the server's file system
+        file_path = upload_dir / file_name
+        with file_path.open("wb") as buffer:
+            buffer.write(await image.read())
+        # Return a JSON response indicating success
+        return JSONResponse(
+            status_code=201, content={"message": "File uploaded successfully"}
+        )
+    except Exception as e:
+        # Return a Status object indicating the error
+        raise HTTPException(
+            status_code=400, detail=Status(success=False, message=str(e))
+        )
 
-    if db_note.author.id == current_user.id:
-        await Notes.filter(id=note_id).update(**note.dict(exclude_unset=True))
-        return await NoteOutSchema.from_queryset_single(Notes.get(id=note_id))
 
-    raise HTTPException(status_code=403, detail=f"Not authorized to update")
+def delete_file(file_path: str) -> Union[Status, Response]:
+    """
+    Delete a file from the server's file system.
 
+    Parameters:
+    - file_path: the path of the file to delete
 
-async def delete_note(note_id, current_user) -> Status:
+    Returns:
+    - A JSON response with status code 200 if successful, or a Status object indicating the error.
+    """
     try:
-        db_note = await NoteOutSchema.from_queryset_single(Notes.get(id=note_id))
-    except DoesNotExist:
-        raise HTTPException(status_code=404, detail=f"Note {note_id} not found")
-
-    if db_note.author.id == current_user.id:
-        deleted_count = await Notes.filter(id=note_id).delete()
-        if not deleted_count:
-            raise HTTPException(status_code=404, detail=f"Note {note_id} not found")
-        return Status(message=f"Deleted note {note_id}")
-
-    raise HTTPException(status_code=403, detail=f"Not authorized to delete")
+        os.remove(file_path)
+        # Return a JSON response indicating success
+        return Response(
+            status_code=200, content={"message": "File deleted successfully"}
+        )
+    except Exception as e:
+        # Return a Status object indicating the error
+        return Status(success=False, message=f"123 {str(e)}")
