@@ -3,11 +3,13 @@ import axios from 'axios';
 const state = {
   images: null,
   image: null,
+  selectedImage: null,
 };
 
 const getters = {
   stateImages: (state) => state.images,
   stateImage: (state) => state.image,
+  selectedImage: (state) => state.selectedImage,
 };
 
 const actions = {
@@ -26,6 +28,9 @@ const actions = {
     const { data } = await axios.get('images');
     commit('setImages', data);
   },
+  setSelectedImage({ commit }, imageUrl) {
+    commit('setSelectedImage', imageUrl);
+  },
   // ... (other actions)
 };
 
@@ -35,6 +40,9 @@ const mutations = {
   },
   setImage(state, image) {
     state.image = image;
+  },
+  setSelectedImage(state, imageUrl) {
+    state.selectedImage = imageUrl;
   },
   // ... (other mutations)
 };

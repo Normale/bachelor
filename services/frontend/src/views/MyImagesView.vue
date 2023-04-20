@@ -7,11 +7,7 @@
       <div v-if="images.length">
         <div class="image-grid">
           <div v-for="image in images" :key="image" @click="selectImage(image)">
-            <img
-              :src="image"
-              :class="{ 'selected-image': selectedImage === image }"
-              alt="Image"
-            />
+            <img :src="image" :class="{ 'selected-image': selectedImage === image }" alt="Image" />
           </div>
         </div>
         <div v-if="selectedImage" class="process-btn-container">
@@ -25,6 +21,7 @@
     </section>
   </div>
 </template>
+
 
 <script>
 import { defineComponent } from 'vue';
@@ -47,8 +44,8 @@ export default defineComponent({
       this.selectedImage = image;
     },
     processImage() {
-      console.log('Processing image:', this.selectedImage);
-      // Add your image processing logic here
+      this.$store.dispatch('images/setSelectedImage', this.selectedImage);
+      this.$router.push('/process');
     },
   },
   async created() {
