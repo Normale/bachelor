@@ -19,7 +19,7 @@ def parse_date(date_string: str) -> datetime:
         raise ValueError("Invalid date format. Must be ISO 8601 format: YYYY-MM-DDTHH:MM:SS.ssssss")
 
 
-router = APIRouter()
+router = APIRouter(tags=["Images"])
 
 class StatusMessage(BaseModel):
     message: str
