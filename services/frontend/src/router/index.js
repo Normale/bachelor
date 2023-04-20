@@ -6,7 +6,9 @@ import DashboardView from '@/views/DashboardView.vue';
 import ProfileView from '@/views/ProfileView.vue';
 import NoteView from '@/views/NoteView.vue';
 import EditNoteView from '@/views/EditNoteView.vue';
-import MyImagesView from '@/views/MyImagesView.vue'; // NEW
+import MyImagesView from '@/views/MyImagesView.vue';
+import ProcessImageView from '../views/ProcessImageView.vue';
+
 import store from '@/store';
 
 const routes = [
@@ -53,9 +55,14 @@ const routes = [
   },
   {
     path: '/my-images',
-    name: 'MyImages', // NEW
-    component: MyImagesView, // NEW
-    meta: { requiresAuth: true }, // NEW
+    name: 'MyImages',
+    component: MyImagesView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/process',
+    name: 'ProcessImage',
+    component: ProcessImageView,
   },
 ]
 
