@@ -6,8 +6,8 @@ import DashboardView from '@/views/DashboardView.vue';
 import ProfileView from '@/views/ProfileView.vue';
 import NoteView from '@/views/NoteView.vue';
 import EditNoteView from '@/views/EditNoteView.vue';
-import store from '@/store'; // NEW
-
+import MyImagesView from '@/views/MyImagesView.vue'; // NEW
+import store from '@/store';
 
 const routes = [
   {
@@ -50,6 +50,12 @@ const routes = [
     component: EditNoteView,
     meta: { requiresAuth: true },
     props: true,
+  },
+  {
+    path: '/my-images',
+    name: 'MyImages', // NEW
+    component: MyImagesView, // NEW
+    meta: { requiresAuth: true }, // NEW
   },
 ]
 

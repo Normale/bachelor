@@ -15,7 +15,7 @@ const actions = {
     const formData = new FormData();
     formData.append('image', imageForm.imageFile);
 
-    await axios.post('http://localhost:5000/images', formData, {
+    await axios.post('images', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -23,7 +23,7 @@ const actions = {
     await dispatch('getImages');
   },
   async getImages({ commit }) {
-    const { data } = await axios.get('http://localhost:5000/images');
+    const { data } = await axios.get('images');
     commit('setImages', data);
   },
   // ... (other actions)
