@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const state = {
-  user: null,
+  user: JSON.parse(localStorage.getItem('user')) || null,
 };
 
 const getters = {
@@ -10,36 +10,37 @@ const getters = {
 };
 
 const actions = {
-  async register({dispatch}, form) {
+  async register({ dispatch }, form) {
     await axios.post('register', form);
     let UserForm = new FormData();
     UserForm.append('username', form.username);
     UserForm.append('password', form.password);
     await dispatch('logIn', UserForm);
   },
-  async logIn({dispatch}, user) {
+  async logIn({ dispatch }, user) {
     await axios.post('login', user);
     await dispatch('viewMe');
   },
-  async viewMe({commit}) {
-    let {data} = await axios.get('users/whoami');
+  async viewMe({ commit }) {
+    let { data } = await axios.get('users/whoami');
     await commit('setUser', data);
+    localStorage.setItem('user', JSON.stringify(data));
   },
-  // eslint-disable-next-line no-empty-pattern
   async deleteUser({}, id) {
     await axios.delete(`user/${id}`);
   },
-  async logOut({commit}) {
+  async logOut({ commit }) {
     let user = null;
     commit('logout', user);
+    localStorage.removeItem('user');
   }
 };
 
 const mutations = {
-  setUser(state, username) {
-    state.user = username;
+  setUser(state, user) {
+    state.user = user;
   },
-  logout(state, user){
+  logout(state, user) {
     state.user = user;
   },
 };
