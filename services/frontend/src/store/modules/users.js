@@ -1,8 +1,10 @@
 import axios from 'axios';
 
+const user = JSON.parse(localStorage.getItem('user'));
 const state = {
-  user: JSON.parse(localStorage.getItem('user')) || null,
+  user: user ? user : null,
 };
+
 
 const getters = {
   isAuthenticated: state => !!state.user,
@@ -26,7 +28,7 @@ const actions = {
     await commit('setUser', data);
     localStorage.setItem('user', JSON.stringify(data));
   },
-  async deleteUser({}, id) {
+  async deleteUser(_, id) {
     await axios.delete(`user/${id}`);
   },
   async logOut({ commit }) {
