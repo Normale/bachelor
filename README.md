@@ -1,23 +1,12 @@
-# Developing a Single Page App with FastAPI and Vue.js
+Work in progress
 
-### Want to learn how to build this?
-
-Check out the [post](https://testdriven.io/blog/developing-a-single-page-app-with-fastapi-and-vuejs).
-
-## Want to use this project?
-
-Build the images and spin up the containers:
-
+Useful commands:
 ```sh
 $ docker-compose up -d --build
 ```
-
-Apply the migrations:
-
 ```sh
 $ docker-compose exec backend aerich upgrade
 ```
-or
 ```sh
 $ docker-compose exec backend aerich migrate
 ```
