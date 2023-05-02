@@ -1,6 +1,8 @@
-from typing import List
+from pathlib import Path
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi.responses import FileResponse
 from tortoise.contrib.fastapi import HTTPNotFoundError
 from tortoise.exceptions import DoesNotExist
 from src.database.models import Styles
@@ -18,7 +20,7 @@ from src.schemas.styles import (
     StyleDatabaseSchema,
 )
 from src.schemas.token import Status
-
+from src.config import settings
 
 router = APIRouter(tags=["Styles"])
 
@@ -83,3 +85,43 @@ async def update_style_endpoint(
 async def delete_style_endpoint(style_id: int) -> Status:
     await delete_style(style_id)
     return Status(message=f"Deleted style {style_id}")
+
+
+@router.get(
+    "/style/{style_name}/images",
+)
+async def get_style_images(
+    style_name: str,
+    if_modified_since: Optional[str] = Header(None)
+):
+    # Get the directory path for the user's images
+    images_dir = Path(settings.STYLE_IMAGES_DIR) / style_name / "images"
+    # if images_dir doesn't exist, return 404
+    if not images_dir.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="Style does not exist",
+        )
+
+    # Get a list of all the image file names in the directory
+    image_names = [f.name for f in images_dir.iterdir() if f.is_file()]
+    # Convert the image file names to URLs
+    image_urls = [
+        f"{settings.BASE_STYLE_IMAGES_URL}/{style_name}/images/{name}"
+        for name in image_names
+    ]
+    # Return the list of image URLs as JSON
+    return image_urls
+
+
+@router.get(
+    "/style/{style_name}/images/{image_name}",
+)
+async def get_image(
+    style_name: str,
+    image_name: str,
+):  
+    file_path = Path(settings.STYLE_IMAGES_DIR) / style_name / "images" / image_name
+    # file_path = f"./storage/images/{style_name}/{image_name}"
+    return FileResponse(file_path)
+
