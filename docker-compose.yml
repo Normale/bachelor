@@ -1,17 +1,17 @@
-version: '0.1'
+version: '3'
 
 services:
-
   backend:
     build: ./services/backend
     ports:
       - 5000:5000
+      - 5678:5678
     environment:
-      - DATABASE_URL=postgres://bachelor:bachelor@db:5432/bachelor_db
-      - SECRET_KEY=09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7
+      DATABASE_URL: postgres://bachelor:bachelor@db:5432/bachelor_db
+      SECRET_KEY: 09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7
     volumes:
       - ./services/backend:/app
-    command: uvicorn src.main:app --reload --host 0.0.0.0 --port 5000
+    command: python -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m uvicorn src.main:app --host 0.0.0.0 --port 5000 --reload
     depends_on:
       - db
 
@@ -25,12 +25,10 @@ services:
 
   db:
     image: postgres:15.1
-    expose:
-      - 5432
     environment:
-      - POSTGRES_USER=bachelor
-      - POSTGRES_PASSWORD=bachelor
-      - POSTGRES_DB=bachelor_db
+      POSTGRES_USER: bachelor
+      POSTGRES_PASSWORD: bachelor
+      POSTGRES_DB: bachelor_db
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     ports:
