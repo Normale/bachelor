@@ -27,11 +27,23 @@ router = APIRouter(tags=["Styles"])
 
 @router.get(
     "/styles",
-    response_model=List[StyleOutSchema],
-    dependencies=[Depends(get_current_user)],
+    response_model=List[StyleOutSchema]
 )
-async def get_styles():
-    return await StyleOutSchema.from_queryset(Styles.all())
+async def get_styles() -> List[StyleOutSchema]:
+    # return dummy values for now
+    return [
+        StyleOutSchema(
+            id=1,
+            name="rpg",
+            author_id=1,
+        ),
+        StyleOutSchema(
+            id=2,
+            name="fantasy",
+            author_id=1,
+        ),
+    ]
+    # return await StyleOutSchema.from_queryset(Styles.all())
 
 
 @router.get(
@@ -93,7 +105,7 @@ async def delete_style_endpoint(style_id: int) -> Status:
 async def get_style_images(
     style_name: str,
     if_modified_since: Optional[str] = Header(None)
-):
+) -> List[str]:
     # Get the directory path for the user's images
     images_dir = Path(settings.STYLE_IMAGES_DIR) / style_name / "images"
     # if images_dir doesn't exist, return 404
@@ -120,7 +132,7 @@ async def get_style_images(
 async def get_image(
     style_name: str,
     image_name: str,
-):  
+) -> FileResponse:  
     file_path = Path(settings.STYLE_IMAGES_DIR) / style_name / "images" / image_name
     # file_path = f"./storage/images/{style_name}/{image_name}"
     return FileResponse(file_path)
