@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,7 +7,8 @@ from tortoise import Tortoise
 
 from src.database.register import register_tortoise
 from src.database.config import TORTOISE_ORM
-
+from src.kafka.register import register_kafka
+from src.kafka.config import KAFKA_CONFIG
 
 # enable schemas to read relationship between models
 Tortoise.init_models(["src.database.models"], "models")
@@ -32,7 +34,7 @@ app.include_router(notes.router)
 app.include_router(images.router)
 app.include_router(styles.router)
 register_tortoise(app, config=TORTOISE_ORM, generate_schemas=True)
-
+register_kafka(app, config=KAFKA_CONFIG)
 
 @app.get("/")
 def home():
@@ -45,11 +47,8 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     
     # Receive data from the client
-    received_data = await websocket.receive_json()
+    received_data = await websocket.receive_text()
     print("Received data from the client:", received_data)
-
-    # Simulate processing
-    await asyncio.sleep(1)  # Wait for 1 second to simulate processing time
 
     # Send the "processing" state with queue_length and estimated_time details
     processing_response = {
@@ -60,9 +59,11 @@ async def websocket_endpoint(websocket: WebSocket):
         }
     }
     await websocket.send_json(processing_response)
+    
+    await app.state.producer.send_and_wait("style-transfer", json.dumps(received_data).encode('utf-8'))
 
     # Simulate waiting for processing to finish
-    await asyncio.sleep(5)  # Wait for 5 seconds to simulate processing time
+    await asyncio.sleep(3)  # Wait for 5 seconds to simulate processing time
 
     # Send the "finished" state with the result URL
     finished_response = {
