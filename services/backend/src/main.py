@@ -6,7 +6,8 @@ from tortoise import Tortoise
 
 from src.database.register import register_tortoise
 from src.database.config import TORTOISE_ORM
-
+from src.kafka.register import register_kafka
+from src.kafka.config import KAFKA_CONFIG
 
 # enable schemas to read relationship between models
 Tortoise.init_models(["src.database.models"], "models")
@@ -32,7 +33,7 @@ app.include_router(notes.router)
 app.include_router(images.router)
 app.include_router(styles.router)
 register_tortoise(app, config=TORTOISE_ORM, generate_schemas=True)
-
+# register_kafka(app, config=KAFKA_CONFIG)
 
 @app.get("/")
 def home():
@@ -45,8 +46,36 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     
     # Receive data from the client
-    received_data = await websocket.receive_json()
+    received_data = await websocket.receive_text()
     print("Received data from the client:", received_data)
+
+    # await app.state.producer.send('test-topic', key=b'key', value=received_data.encode('utf-8'))
+    from kafka import KafkaProducer, KafkaConsumer
+    import json
+    KAFKA_BROKER_URL = 'kafka:9092'
+    TOPIC = 'test-topic'
+    producer = KafkaProducer(
+        bootstrap_servers=KAFKA_BROKER_URL,
+        value_serializer=lambda v: json.dumps(v).encode('utf-8')
+    )
+
+    # Send a test message
+    producer.send(TOPIC, {'message': 'Hello, Kafka from fastapi!'})
+    producer.flush()
+
+    print("Sent 'Hello, Kafka!' message to the 'test-topic' topic")
+
+
+
+
+
+
+
+
+
+
+
+
 
     # Simulate processing
     await asyncio.sleep(1)  # Wait for 1 second to simulate processing time
