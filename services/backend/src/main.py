@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
@@ -33,7 +34,7 @@ app.include_router(notes.router)
 app.include_router(images.router)
 app.include_router(styles.router)
 register_tortoise(app, config=TORTOISE_ORM, generate_schemas=True)
-# register_kafka(app, config=KAFKA_CONFIG)
+register_kafka(app, config=KAFKA_CONFIG)
 
 @app.get("/")
 def home():
@@ -49,37 +50,6 @@ async def websocket_endpoint(websocket: WebSocket):
     received_data = await websocket.receive_text()
     print("Received data from the client:", received_data)
 
-    # await app.state.producer.send('test-topic', key=b'key', value=received_data.encode('utf-8'))
-    from kafka import KafkaProducer, KafkaConsumer
-    import json
-    KAFKA_BROKER_URL = 'kafka:9092'
-    TOPIC = 'test-topic'
-    producer = KafkaProducer(
-        bootstrap_servers=KAFKA_BROKER_URL,
-        value_serializer=lambda v: json.dumps(v).encode('utf-8')
-    )
-
-    # Send a test message
-    producer.send(TOPIC, {'message': 'Hello, Kafka from fastapi!'})
-    producer.flush()
-
-    print("Sent 'Hello, Kafka!' message to the 'test-topic' topic")
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # Simulate processing
-    await asyncio.sleep(1)  # Wait for 1 second to simulate processing time
-
     # Send the "processing" state with queue_length and estimated_time details
     processing_response = {
         "state": "processing",
@@ -89,9 +59,11 @@ async def websocket_endpoint(websocket: WebSocket):
         }
     }
     await websocket.send_json(processing_response)
+    
+    await app.state.producer.send_and_wait("style-transfer", json.dumps(received_data).encode('utf-8'))
 
     # Simulate waiting for processing to finish
-    await asyncio.sleep(5)  # Wait for 5 seconds to simulate processing time
+    await asyncio.sleep(3)  # Wait for 5 seconds to simulate processing time
 
     # Send the "finished" state with the result URL
     finished_response = {

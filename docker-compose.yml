@@ -9,7 +9,7 @@ services:
     environment:
       DATABASE_URL: postgres://bachelor:bachelor@db:5432/bachelor_db
       SECRET_KEY: 09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7
-      KAFKA_URL: localhost:9092
+      KAFKA_URL: kafka:9092
     volumes:
       - ./services/backend:/app
     command: python -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m uvicorn src.main:app --host 0.0.0.0 --port 5000 --reload
@@ -28,7 +28,7 @@ services:
       - 8080:8080
     networks: 
       - rmoff_kafka
-      
+
   db:
     image: postgres:15.1
     environment:
