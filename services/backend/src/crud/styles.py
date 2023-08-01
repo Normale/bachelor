@@ -7,11 +7,12 @@ from src.schemas.styles import StyleInSchema, StyleOutSchema
 
 async def create_style(style: StyleInSchema) -> StyleOutSchema:
     try:
-        style_obj = await Styles.create(**style.dict())
+        style_obj = await Styles.create(**style.dict(exclude_unset=True))
     except IntegrityError:
         raise HTTPException(status_code=400, detail="Style creation failed")
-
+    
     return await StyleOutSchema.from_tortoise_orm(style_obj)
+
 
 
 async def get_style(style_id: int) -> StyleOutSchema:

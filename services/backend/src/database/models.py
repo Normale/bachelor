@@ -8,6 +8,7 @@ class Users(models.Model):
     password = fields.CharField(max_length=128, null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     modified_at = fields.DatetimeField(auto_now=True)
+    is_superuser = fields.BooleanField(default=False)
 
 
 class Notes(models.Model):
@@ -28,3 +29,15 @@ class Styles(models.Model):
     modified_at = fields.DatetimeField(auto_now=True)
     def __str__(self):
         return f"{self.name}, {self.author_id} on {self.created_at}"
+
+class Results(models.Model):
+    id = fields.IntField(pk=True)
+    content_image = fields.CharField(max_length=255)
+    style_image = fields.CharField(max_length=255)
+    style = fields.ForeignKeyField("models.Styles", related_name="result")
+    user = fields.ForeignKeyField("models.Users", related_name="result")
+    created_at = fields.DatetimeField(auto_now_add=True)
+    modified_at = fields.DatetimeField(auto_now=True)
+    job_id = fields.CharField(max_length=255)
+    def __str__(self):
+        return f"Result by user {self.user_id} with style {self.style_id} on {self.created_at}"

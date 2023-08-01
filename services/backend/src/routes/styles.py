@@ -51,10 +51,10 @@ async def get_styles() -> List[StyleOutSchema]:
     response_model=StyleOutSchema,
     dependencies=[Depends(get_current_user)],
 )
-async def get_style(style_id: int) -> StyleOutSchema:
+async def get_style_endpoint(style_id: int) -> StyleOutSchema:
     try:
         style_obj = await get_style(style_id)
-        return await StyleOutSchema.from_tortoise_orm(style_obj)
+        return style_obj
     except DoesNotExist:
         raise HTTPException(
             status_code=404,
@@ -71,7 +71,7 @@ async def create_style_endpoint(
     style: StyleInSchema,
 ) -> StyleOutSchema:
     style_obj = await create_style(style)
-    return await StyleOutSchema.from_tortoise_orm(style_obj)
+    return style_obj
 
 
 @router.patch(
@@ -85,7 +85,7 @@ async def update_style_endpoint(
     style: StyleInSchema,
 ) -> StyleOutSchema:
     style_obj = await update_style(style_id, style)
-    return await StyleOutSchema.from_tortoise_orm(style_obj)
+    return style_obj
 
 
 @router.delete(
