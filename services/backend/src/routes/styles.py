@@ -31,19 +31,19 @@ router = APIRouter(tags=["Styles"])
 )
 async def get_styles() -> List[StyleOutSchema]:
     # return dummy values for now
-    return [
-        StyleOutSchema(
-            id=1,
-            name="rpg",
-            author_id=1,
-        ),
-        StyleOutSchema(
-            id=2,
-            name="fantasy",
-            author_id=1,
-        ),
-    ]
-    # return await StyleOutSchema.from_queryset(Styles.all())
+    # return [
+    #     StyleOutSchema(
+    #         id=1,
+    #         name="rpg",
+    #         author=1,
+    #     ),
+    #     StyleOutSchema(
+    #         id=2,
+    #         name="fantasy",
+    #         author=1,
+    #     ),
+    # ]
+    return await StyleOutSchema.from_queryset(Styles.all())
 
 
 @router.get(
