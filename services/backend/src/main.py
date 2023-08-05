@@ -18,7 +18,7 @@ import 'from src.routes import users, notes' must be after 'Tortoise.init_models
 why?
 https://stackoverflow.com/questions/65531387/tortoise-orm-for-python-no-returns-relations-of-entities-pyndantic-fastapi
 """
-from src.routes import users, notes, images, styles
+from src.routes import users, notes, images, styles, results, notifications
 
 app = FastAPI()
 
@@ -33,6 +33,8 @@ app.include_router(users.router)
 app.include_router(notes.router)
 app.include_router(images.router)
 app.include_router(styles.router)
+app.include_router(results.router)
+app.include_router(notifications.router)
 register_tortoise(app, config=TORTOISE_ORM, generate_schemas=True)
 register_kafka(app, config=KAFKA_CONFIG)
 
