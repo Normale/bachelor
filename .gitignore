@@ -4,3 +4,4 @@ node_modules/
 env/
 __pycache__
 services/backend/storage
+services/backend/src/secret.py

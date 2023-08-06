@@ -37,3 +37,4 @@ tortoise-orm==0.19.2
 typing_extensions==4.5.0
 uvicorn[standard]==0.20.0
 aiopg==1.4.0
+azure-storage-blob==12.17.0

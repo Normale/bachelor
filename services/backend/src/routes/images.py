@@ -1,29 +1,25 @@
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Header
-from fastapi.responses import FileResponse, Response
+# routes/images.py
+
+from urllib.parse import urljoin
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Header
+from fastapi.responses import FileResponse, Response, JSONResponse, StreamingResponse
 from src.auth.jwthandler import get_current_user
-from src.crud.images import upload_image_to_storage, delete_file
+from src.crud.images import upload_image_to_storage, delete_file_from_storage
 from src.schemas.token import Status
 from pydantic import BaseModel
 from typing import Optional
-import os
 from datetime import datetime
 from fastapi import exceptions
-from starlette.status import HTTP_304_NOT_MODIFIED
 from src.config import settings
 from pathlib import Path
-def parse_date(date_string: str) -> datetime:
-    try:
-        return datetime.fromisoformat(date_string)
-    except ValueError:
-        # Handle invalid input
-        raise ValueError("Invalid date format. Must be ISO 8601 format: YYYY-MM-DDTHH:MM:SS.ssssss")
+from azure.storage.blob import BlobServiceClient
+import io
 
 
 router = APIRouter(tags=["Images"])
 
 class StatusMessage(BaseModel):
     message: str
-
 
 @router.post(
     "/images",
@@ -34,82 +30,64 @@ async def upload_image(
     image: UploadFile = File(...),
     current_user = Depends(get_current_user)
 ):
-    image_url = await upload_image_to_storage(image, current_user.username)
-    return StatusMessage(message=f"Image uploaded successfully. URL: {image_url}")
+    response = await upload_image_to_storage(image, current_user.username)
+    return response
+
 
 @router.get(
     "/images",
     dependencies=[Depends(get_current_user)]
 )
-async def get_images(
-    current_user = Depends(get_current_user),
-    if_modified_since: Optional[str] = Header(None)
-):
-    # Get the directory path for the user's images
-    images_dir = Path(settings.IMAGE_UPLOAD_DIR) / current_user.username
-    # Create the directory if it does not exist
-    images_dir.mkdir(parents=True, exist_ok=True)
-    # Get a list of all the image file names in the directory
-    image_names = [f.name for f in images_dir.glob("*.*")]
-    # Convert the image file names to URLs
-    image_urls = [
-        f"{settings.BASE_IMAGE_URL}/{current_user.username}/{name}"
-        for name in image_names
-    ]
-    # Return the list of image URLs as JSON
+async def get_images(current_user = Depends(get_current_user)):
+    blob_service_client = BlobServiceClient.from_connection_string(settings.STORAGE_CONNECTION_STRING)
+    blob_list = blob_service_client.get_container_client(settings.CONTAINER_NAME).list_blobs(current_user.username)
+
+    # Now we use the BASE_IMAGE_URL from your settings
+    base_url = settings.BASE_IMAGE_URL
+    image_urls = [urljoin(base_url, blob.name) for blob in blob_list]
+
     return image_urls
 
-    
-
 @router.get(
-    "/images/{username}/{image_name}",
+    "/images/{blob_name:path}",
     dependencies=[Depends(get_current_user)]
 )
 async def get_image(
-    username: str,
-    image_name: str,
+    blob_name: str,
     current_user = Depends(get_current_user),
 ):
-    if current_user.username != username:
-        raise HTTPException(
-            status_code=403,
-            detail="You do not have permission to view this image."
-        )
-        
-    file_path = f"./storage/images/{current_user.username}/{image_name}"
-    return FileResponse(file_path)
+    blob_service_client = BlobServiceClient.from_connection_string(settings.STORAGE_CONNECTION_STRING)
+    blob_client = blob_service_client.get_blob_client(settings.CONTAINER_NAME, blob_name)
+
+    if not blob_client.exists():
+        raise HTTPException(status_code=404, detail="Image not found.")
+    else:
+        blob_stream = blob_client.download_blob().content_as_bytes()
+        return StreamingResponse(io.BytesIO(blob_stream), media_type="image/*")
 
 
 @router.delete(
-    "/images/{username}/{image_name}",
+    "/images/{blob_name:path}",
     response_model=StatusMessage,
     dependencies=[Depends(get_current_user)]
 )
 async def delete_image(
-    username: str,
-    image_name: str,
+    blob_name: str,
     current_user = Depends(get_current_user)
 ):
-    if current_user.username != username:
-        raise HTTPException(
-            status_code=403,
-            detail="You do not have permission to delete this image."
-        )
-    delete_file(f"./storage/images/{current_user.username}/{image_name}")
+    await delete_file_from_storage(blob_name)
     return StatusMessage(message="Image deleted successfully.")
 
-
 @router.patch(
-    "/images/{username}/{image_name}",
+    "/images/{blob_name:path}",
     response_model=StatusMessage,
     dependencies=[Depends(get_current_user)]
 )
 async def update_image(
-    username: str,
-    image_name: str,
+    blob_name: str,
     image: UploadFile = File(...),
     current_user = Depends(get_current_user)
 ):
-    delete_file(f"./storage/images/{current_user.username}/{image_name}")
-    image_url = await upload_image_to_storage(image, current_user.username)
+    await delete_file_from_storage(blob_name)
+    await upload_image_to_storage(image, blob_name)
     return StatusMessage(message="Image updated successfully.")

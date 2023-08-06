@@ -1,51 +1,68 @@
-import hashlib
-from pathlib import Path
-from fastapi import UploadFile
+from azure.storage.blob import BlobServiceClient, BlobClient
+from azure.core.exceptions import ResourceNotFoundError
+from fastapi import UploadFile, HTTPException
 from src.config import settings
-import aiofiles
-import os
-import hashlib
-from pathlib import Path
-from fastapi import UploadFile
-from src.config import settings
-import aiofiles
+from typing import Union
+from fastapi.responses import JSONResponse
+import uuid
+
+blob_service_client = BlobServiceClient.from_connection_string(settings.STORAGE_CONNECTION_STRING)
 
 
-async def upload_image_to_storage(image: UploadFile, username: str) -> str:
+async def upload_image_to_storage(image: UploadFile, username: str) -> Union[JSONResponse, HTTPException]:
     """
-    Upload an image file to the server's file system.
+    Upload an image file to Azure Blob Storage.
 
     Parameters:
     - image: the image file to upload
     - username: the username of the user who uploaded the image
 
     Returns:
-    - The URL of the uploaded image.
-    """
-    file_name = image.filename
-    # replace filename with number of image in folder
-    no_images = len(os.listdir(f"{settings.IMAGE_UPLOAD_DIR}/{username}"))
-    file_name = f"{no_images}.{file_name.split('.')[-1]}"
-    upload_dir = Path(settings.IMAGE_UPLOAD_DIR) / username
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    file_path = upload_dir / file_name
-
-    async with aiofiles.open(file_path, 'wb') as out_file:
-        content = await image.read()  # async read
-        await out_file.write(content)  # async write
-    # Return the URL of the uploaded image
-    return f"{settings.BASE_IMAGE_URL}/{username}/{file_name}"
-
-
-
-def delete_file(file_path: str):
-    """
-    Delete a file from the server's file system.
-
-    Parameters:
-    - file_path: the path of the file to delete
+    - A JSON response indicating success if the upload was successful, or an HTTPException indicating the error.
     """
     try:
-        os.remove(file_path)
-    except FileNotFoundError:
-        pass
+        # Create a unique filename for the image
+        blob_name = f"{username}/{str(uuid.uuid4())}.{image.filename.split('.')[-1]}"
+        blob_client = blob_service_client.get_blob_client(settings.CONTAINER_NAME, blob_name)
+
+        # Upload the image to Azure Blob Storage
+        blob_client.upload_blob(await image.read(), overwrite=True)
+
+        # Return a JSON response indicating success
+        return JSONResponse(
+            status_code=201, content={"message": "File uploaded successfully"}
+        )
+    except Exception as e:
+        # Return a Status object indicating the error
+        raise HTTPException(
+            status_code=400, detail={"success": False, "message": str(e)}
+        )
+
+
+def delete_file_from_storage(blob_name: str) -> Union[JSONResponse, HTTPException]:
+    """
+    Delete a blob from Azure Blob Storage.
+
+    Parameters:
+    - blob_name: the name of the blob to delete
+
+    Returns:
+    - A JSON response with status code 200 if successful, or an HTTPException indicating the error.
+    """
+    try:
+        blob_client = blob_service_client.get_blob_client(settings.CONTAINER_NAME, blob_name)
+        blob_client.delete_blob()
+
+        # Return a JSON response indicating success
+        return JSONResponse(
+            status_code=200, content={"message": "File deleted successfully"}
+        )
+    except ResourceNotFoundError:
+        raise HTTPException(
+            status_code=404, detail={"success": False, "message": "Blob not found"}
+        )
+    except Exception as e:
+        # Return a Status object indicating the error
+        return HTTPException(
+            status_code=400, detail={"success": False, "message": str(e)}
+        )
