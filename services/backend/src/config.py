@@ -11,3 +11,20 @@ class Settings(BaseSettings):
     STORAGE_CONNECTION_STRING: str = AZURE_CONNECTION_STRING
     CONTAINER_NAME: str = "bachelor"
 settings = Settings()
+
+
+# # kafka endpoint
+# from kafka import KafkaAdminClient
+# from kafka.admin import NewTopic
+
+# # Create an admin client
+# admin_client = KafkaAdminClient(
+#     bootstrap_servers='kafka:9092', 
+#     client_id='test'
+# )
+
+# # Define the topic
+# topic = NewTopic(name="fantasy2", num_partitions=1, replication_factor=1)
+
+# # Create the topic
+# admin_client.create_topics([topic])

@@ -11,3 +11,7 @@ docker-compose exec backend aerich upgrade
 docker-compose exec backend aerich migrate
 ```
 Ensure [http://localhost:5000](http://localhost:5000), [http://localhost:5000/docs](http://localhost:5000/docs), and [http://localhost:8080](http://localhost:8080) work as expected.
+
+Kafka check note:
+cd /bin
+kafka-topics --list --bootstrap-server kafka:9092

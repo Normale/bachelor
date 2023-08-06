@@ -40,8 +40,9 @@ async def upload_image(
 )
 async def get_images(current_user = Depends(get_current_user)):
     blob_service_client = BlobServiceClient.from_connection_string(settings.STORAGE_CONNECTION_STRING)
+    print(f"Getting images for user {current_user.username}")
     blob_list = blob_service_client.get_container_client(settings.CONTAINER_NAME).list_blobs(current_user.username)
-
+    print(f"Got blob list: {blob_list}")
     # Now we use the BASE_IMAGE_URL from your settings
     base_url = settings.BASE_IMAGE_URL
     image_urls = [urljoin(base_url, blob.name) for blob in blob_list]

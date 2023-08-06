@@ -44,12 +44,15 @@ def home():
     return "Hello, World!"
 
 
+
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     
     # Receive data from the client
-    received_data = await websocket.receive_text()
+    received_data = await websocket.receive_json()
     print("Received data from the client:", received_data)
 
     # Send the "processing" state with queue_length and estimated_time details
@@ -61,8 +64,9 @@ async def websocket_endpoint(websocket: WebSocket):
         }
     }
     await websocket.send_json(processing_response)
-    
-    await app.state.producer.send_and_wait("style-transfer", json.dumps(received_data).encode('utf-8'))
+    received_data_bytes = json.dumps(received_data).encode('utf-8')
+
+    await app.state.producer.send_and_wait(received_data["selectedStyle"], received_data_bytes)# json.dumps(received_data).encode('utf-8'))
 
     # Simulate waiting for processing to finish
     await asyncio.sleep(3)  # Wait for 5 seconds to simulate processing time
