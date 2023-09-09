@@ -11,6 +11,10 @@ from fastapi import exceptions
 from starlette.status import HTTP_304_NOT_MODIFIED
 from src.config import settings
 from pathlib import Path
+from src.crud.images import upload_image_to_storage
+from azure.storage.blob import BlobServiceClient
+import io
+from fastapi.responses import FileResponse, Response, JSONResponse, StreamingResponse
 
 router = APIRouter(tags=["Results"])
 
@@ -18,6 +22,7 @@ class StatusMessage(BaseModel):
     message: str
 
 from src.schemas.results import ResultInSchema
+
 
 @router.post(
     "/results/{username}",
@@ -27,13 +32,15 @@ from src.schemas.results import ResultInSchema
 async def upload_result(
     username: str,
     result_data: ResultInSchema,
-    current_user = Depends(get_current_user)
+    current_user = Depends(get_current_user),
 ):
     if not current_user.is_superuser:
         raise HTTPException(
             status_code=403,
             detail="You do not have permission to upload results."
         )
+
+    # Continue with the rest of your logic to create the result and return the URL
     result_url = await create_result(result_data)
     return StatusMessage(message=f"Result uploaded successfully. URL: {result_url}")
 
@@ -60,22 +67,24 @@ async def get_results(
     # Return the list of result URLs as JSON
     return result_urls
 
+
+
 @router.get(
-    "/results/{username}/{result_name}",
-    dependencies=[Depends(get_current_user)]
+    "/results/{blob_name:path}",
 )
-async def get_result(
-    username: str,
-    result_name: str,
-    current_user = Depends(get_current_user),
+async def get_image(
+    blob_name: str,
 ):
-    if current_user.username != username:
-        raise HTTPException(
-            status_code=403,
-            detail="You do not have permission to view this result."
-        )
-    file_path = f"./storage/images/{username}/{result_name}"
-    return FileResponse(file_path)
+    blob_path = f"results/{blob_name}"
+    blob_service_client = BlobServiceClient.from_connection_string(settings.STORAGE_CONNECTION_STRING)
+    blob_client = blob_service_client.get_blob_client(settings.CONTAINER_NAME, blob_path)
+
+    if not blob_client.exists():
+        raise HTTPException(status_code=404, detail="Image not found.")
+    else:
+        blob_stream = blob_client.download_blob().content_as_bytes()
+        return StreamingResponse(io.BytesIO(blob_stream), media_type="image/*")
+
 
 @router.delete(
     "/results/{username}/{result_name}",

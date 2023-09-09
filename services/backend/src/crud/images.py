@@ -66,3 +66,4 @@ def delete_file_from_storage(blob_name: str) -> Union[JSONResponse, HTTPExceptio
         return HTTPException(
             status_code=400, detail={"success": False, "message": str(e)}
         )
+ 

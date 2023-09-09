@@ -30,7 +30,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(users.router)
-app.include_router(notes.router)
+# app.include_router(notes.router)
 app.include_router(images.router)
 app.include_router(styles.router)
 app.include_router(results.router)
