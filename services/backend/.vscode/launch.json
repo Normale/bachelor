@@ -9,8 +9,8 @@
         "host": "0.0.0.0",
         "pathMappings": [
           {
-            "localRoot": "${workspaceFolder}/services/backend",
-            "remoteRoot": "/app/src"
+            "localRoot": "${workspaceFolder}",
+            "remoteRoot": "/app"
           }
         ]
       }

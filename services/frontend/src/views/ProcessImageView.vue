@@ -10,7 +10,7 @@
       <div class="images-container">
         <img :src="selectedImage" alt="Selected image" class="processed-image" />
         <img v-if="selectedStyleImage" :src="selectedStyleImage" alt="Selected style image" class="processed-image" />
-        <img v-if="resultImageUrl" :src="resultImageUrl" alt="Result image" class="processed-image" />
+        <img v-if="resultImageUrl" :src="resultImageUrl" alt="Result image" class="processed-image result-image" />
         <div v-if="processing">
           <p>Processing... Estimated time: {{ estimatedTime }} seconds</p>
         </div>
@@ -118,11 +118,28 @@ export default defineComponent({
 
 
 <style scoped>
+.images-container {
+  display: flex;               /* Convert container into a flex container */
+  justify-content: space-between; /* Distribute space between the images */
+  align-items: center;           /* Center align vertically */
+  flex-wrap: wrap;               /* Allow items to wrap to the next line if needed */
+  gap: 1rem;                     /* Space between each image */
+}
+
+.result-image {
+  max-width: 50%;   /* Making it larger. Adjust as needed */
+  max-height: 400px; /* Adjust the height if needed */
+  border: 3px solid #007bff;  /* Adding a border. Change the color and width as desired */
+  margin: 1rem 0; /* Add some vertical margin */
+  flex: 2; /* Allows the image to grow more than the other images, making it larger in the flex layout */
+}
+
+
 .processed-image {
-  max-width: 100%;
+  max-width: calc(25% - 1rem);   /* Adjust max-width to fit three images. Subtracting the gap size */
   max-height: 300px;
-  display: block;
   margin-bottom: 1rem;
+  flex: 1;
 }
 
 .options {
@@ -152,8 +169,10 @@ export default defineComponent({
 }
 
 .generate-btn-container {
-  display: flex;
-  justify-content: flex-end;
+  position: fixed;     
+  right: 20px;         
+  bottom: 20px;        
+  z-index: 1000;    
 }
 
 .generate-btn {

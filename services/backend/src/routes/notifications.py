@@ -16,8 +16,8 @@ async def listen_for_changes(id: int):
         async with conn.cursor() as cur:
             await cur.execute("LISTEN results;")
             msg = await asyncio.wait_for(conn.notifies.get(), timeout=10)
-            payload_data = json.loads(msg.payload)  # Parse the payload as JSON
-            print(f"Received notification: {payload_data}")
+            # payload_data = json.loads(msg.payload)  # Parse the payload as JSON
+            print(f"Received notification: {msg}")
     
     # Return a simple message. You might want to return something more meaningful in your application.
     return {"message": "Received notification"}

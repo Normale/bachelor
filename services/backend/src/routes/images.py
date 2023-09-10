@@ -46,7 +46,7 @@ async def get_images(current_user = Depends(get_current_user)):
     # Now we use the BASE_IMAGE_URL from your settings
     base_url = settings.BASE_IMAGE_URL
     image_urls = [urljoin(base_url, blob.name) for blob in blob_list]
-
+    
     return image_urls
 
 @router.get(

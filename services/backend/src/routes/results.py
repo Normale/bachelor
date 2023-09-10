@@ -70,12 +70,13 @@ async def get_results(
 
 
 @router.get(
-    "/results/{blob_name:path}",
+    "/results/{blob_path:path}",
 )
 async def get_image(
-    blob_name: str,
+    blob_path: str,
 ):
-    blob_path = f"results/{blob_name}"
+    Path("results").mkdir(exist_ok=True)
+
     blob_service_client = BlobServiceClient.from_connection_string(settings.STORAGE_CONNECTION_STRING)
     blob_client = blob_service_client.get_blob_client(settings.CONTAINER_NAME, blob_path)
 
@@ -83,7 +84,9 @@ async def get_image(
         raise HTTPException(status_code=404, detail="Image not found.")
     else:
         blob_stream = blob_client.download_blob().content_as_bytes()
-        return StreamingResponse(io.BytesIO(blob_stream), media_type="image/*")
+        with open(blob_path, 'wb') as f:
+            f.write(blob_stream)
+        return FileResponse(blob_path, media_type="image/*")
 
 
 @router.delete(
