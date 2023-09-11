@@ -65,46 +65,45 @@ export default defineComponent({
       this.sendDataToServer();
     },
     sendDataToServer() {
-      if (!this.websocket) {
-        // Replace the URL with your WebSocket server's URL
+      if (!this.websocket || this.websocket.readyState !== WebSocket.OPEN) {
         this.websocket = new WebSocket('ws://localhost:5000/ws');
+
+        this.websocket.addEventListener('open', () => {
+          this.sendImageDetails();
+        });
+
+        this.websocket.addEventListener('message', (event) => {
+          console.log('Server response:', event.data);
+          const responseData = JSON.parse(event.data);
+
+          if (responseData.state === 'processing') {
+            this.processing = true;
+            this.estimatedTime = responseData.details.estimated_time;
+          } else if (responseData.state === 'finished') {
+            this.processing = false;
+            this.resultImageUrl = responseData.result;
+          }
+        });
+
+        this.websocket.addEventListener('error', (event) => {
+          console.error('WebSocket error:', event);
+        });
+
+        this.websocket.addEventListener('close', () => {
+          console.log('WebSocket closed');
+        });
+      } else {
+        this.sendImageDetails();
       }
+    },
+    sendImageDetails() {
+      const data = {
+        selectedImage: this.selectedImage,
+        selectedStyleImage: this.selectedStyleImage,
+        selectedStyle: this.selectedStyle,
+      };
 
-      this.websocket.addEventListener('open', () => {
-        const data = {
-          selectedImage: this.selectedImage,
-          selectedStyleImage: this.selectedStyleImage,
-          selectedStyle: this.selectedStyle,
-        };
-
-        this.websocket.send(JSON.stringify(data));
-      });
-
-      this.websocket.addEventListener('message', (event) => {
-        console.log('Server response:', event.data);
-        const responseData = JSON.parse(event.data);
-
-        if (responseData.state === 'processing') {
-          this.processing = true;
-          this.estimatedTime = responseData.details.estimated_time;
-        } else if (responseData.state === 'finished') {
-          this.processing = false;
-          this.resultImageUrl = responseData.result;
-        }
-      });
-
-      this.websocket.addEventListener('message', (event) => {
-        console.log('Server response:', event.data);
-        // Handle the server response here
-      });
-
-      this.websocket.addEventListener('error', (event) => {
-        console.error('WebSocket error:', event);
-      });
-
-      this.websocket.addEventListener('close', () => {
-        console.log('WebSocket closed');
-      });
+      this.websocket.send(JSON.stringify(data));
     },
   },
 
@@ -119,24 +118,35 @@ export default defineComponent({
 
 <style scoped>
 .images-container {
-  display: flex;               /* Convert container into a flex container */
-  justify-content: space-between; /* Distribute space between the images */
-  align-items: center;           /* Center align vertically */
-  flex-wrap: wrap;               /* Allow items to wrap to the next line if needed */
-  gap: 1rem;                     /* Space between each image */
+  display: flex;
+  /* Convert container into a flex container */
+  justify-content: space-between;
+  /* Distribute space between the images */
+  align-items: center;
+  /* Center align vertically */
+  flex-wrap: wrap;
+  /* Allow items to wrap to the next line if needed */
+  gap: 1rem;
+  /* Space between each image */
 }
 
 .result-image {
-  max-width: 50%;   /* Making it larger. Adjust as needed */
-  max-height: 400px; /* Adjust the height if needed */
-  border: 3px solid #007bff;  /* Adding a border. Change the color and width as desired */
-  margin: 1rem 0; /* Add some vertical margin */
-  flex: 2; /* Allows the image to grow more than the other images, making it larger in the flex layout */
+  max-width: 50%;
+  /* Making it larger. Adjust as needed */
+  max-height: 400px;
+  /* Adjust the height if needed */
+  border: 3px solid #007bff;
+  /* Adding a border. Change the color and width as desired */
+  margin: 1rem 0;
+  /* Add some vertical margin */
+  flex: 2;
+  /* Allows the image to grow more than the other images, making it larger in the flex layout */
 }
 
 
 .processed-image {
-  max-width: calc(25% - 1rem);   /* Adjust max-width to fit three images. Subtracting the gap size */
+  max-width: calc(25% - 1rem);
+  /* Adjust max-width to fit three images. Subtracting the gap size */
   max-height: 300px;
   margin-bottom: 1rem;
   flex: 1;
@@ -169,10 +179,10 @@ export default defineComponent({
 }
 
 .generate-btn-container {
-  position: fixed;     
-  right: 20px;         
-  bottom: 20px;        
-  z-index: 1000;    
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 1000;
 }
 
 .generate-btn {
